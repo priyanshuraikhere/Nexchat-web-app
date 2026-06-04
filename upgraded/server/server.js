@@ -10,7 +10,9 @@ const Message = require("./models/Message");
 const authRoutes = require("./routes/authRoutes");
 
 const app = express();
-
+console.log("PORT:", process.env.PORT);
+console.log("Mongo URI Present:", !!process.env.MONGODB_URI);
+console.log("JWT Present:", !!process.env.JWT_SECRET);
 app.use(cors());
 app.use(express.json());
 
