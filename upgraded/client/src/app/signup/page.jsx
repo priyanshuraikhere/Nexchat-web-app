@@ -40,7 +40,7 @@ export default function Signup() {
     setLoading(true);
     setError("");
     try {
-      await axios.post("http://localhost:3001/api/auth/signup", form);
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`, form);
       router.push("/login?registered=1");
     } catch (err) {
       setError(err.response?.data?.message || "Signup failed. Try again.");

@@ -64,7 +64,7 @@ export default function Home() {
       // Fetch existing messages for this room
       try {
         const res = await axios.get(
-          `http://localhost:3001/api/messages?room=${activeRoom}`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/messages?room=${activeRoom}`
         );
         setMessages(res.data);
       } catch (error) {
