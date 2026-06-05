@@ -529,7 +529,7 @@ html, body {
 .msg-author { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
 
 .msg-bubble {
-  max-width: 68%;
+  max-width: 100%;
   padding: 12px 16px;
   border-radius: var(--radius-lg);
   position: relative;

@@ -325,7 +325,7 @@ export default function ChatRoom({
                       </div>
                     )}
 
-                    <div style={{ position: "relative", display: "inline-block", maxWidth: "68%" }}>
+                    <div style={{ position: "relative", display: "inline-block", maxWidth: "65%" , minWidth: "50px" }}>
 
                       {/* Hover reaction picker */}
                       {hoveredMsg === msgId && (
