@@ -4,15 +4,31 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { socket } from "../lib/socket";
 
-const EMOJIS = ["👍","❤️","😂","😮","😢","🔥","🎉","👏","🙌","💯"];
-const QUICK_EMOJIS = ["😊","😂","❤️","👍","🔥","🎉","😮","😢","🙏","💪","👏","🤔","😎","✨","🥳","💬"];
+const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🔥", "🎉", "👏", "🙌", "💯"];
+
+import EmojiPicker from "emoji-picker-react";
+// import {  } from "lucide-react";
 
 // room label → socket room key
+import {
+  Hash,
+  MessageCircle,
+  Code,
+  Megaphone,
+  Search,
+  Users,
+  Bell,
+  LogOut,
+  Smile,
+  Reply,
+  X,
+  SendHorizontal
+} from "lucide-react";
 const ROOMS = [
-  { label: "# general",       key: "general" },
-  { label: "# random",        key: "random" },
-  { label: "# tech-talk",     key: "tech-talk" },
-  { label: "# announcements", key: "announcements" },
+  { label: "# general", key: "general", icon: MessageCircle },
+  { label: "# random", key: "random", icon: Hash },
+  { label: "# tech-talk", key: "tech-talk", icon: Code },
+  { label: "# announcements", key: "announcements", icon: Megaphone },
 ];
 
 export default function ChatRoom({
@@ -26,18 +42,18 @@ export default function ChatRoom({
   onRoomChange,
   roomLoading,
 }) {
-  const bottomRef    = useRef(null);
-  const textareaRef  = useRef(null);
-  const messagesRef  = useRef(null);   // scrollable messages container
-  const msgRefs      = useRef({});     // { msgId -> DOM element }
-  const router       = useRouter();
+  const bottomRef = useRef(null);
+  const textareaRef = useRef(null);
+  const messagesRef = useRef(null); // scrollable messages container
+  const msgRefs = useRef({}); // { msgId -> DOM element }
+  const router = useRouter();
 
-  const [showEmoji,   setShowEmoji]   = useState(false);
-  const [reactions,   setReactions]   = useState({});
-  const [isTyping,    setIsTyping]    = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [reactions, setReactions] = useState({});
+  const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState([]);
-  const [hoveredMsg,  setHoveredMsg]  = useState(null);
-  const [replyingTo,  setReplyingTo]  = useState(null);
+  const [hoveredMsg, setHoveredMsg] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
   const [highlighted, setHighlighted] = useState(null); // msgId being highlighted
   const typingTimeout = useRef(null);
 
@@ -59,7 +75,7 @@ export default function ChatRoom({
     const handleTyping = (data) => {
       if (data.user === username) return;
       setTypingUsers((prev) =>
-        prev.includes(data.user) ? prev : [...prev, data.user]
+        prev.includes(data.user) ? prev : [...prev, data.user],
       );
       setTimeout(() => {
         setTypingUsers((prev) => prev.filter((u) => u !== data.user));
@@ -102,12 +118,12 @@ export default function ChatRoom({
       replyingTo
         ? {
             replyTo: {
-              _id:    replyingTo._id,
+              _id: replyingTo._id,
               author: replyingTo.author,
-              text:   replyingTo.text,
+              text: replyingTo.text,
             },
           }
-        : {}
+        : {},
     );
     setReplyingTo(null);
     setShowEmoji(false);
@@ -157,7 +173,9 @@ export default function ChatRoom({
     yesterday.setDate(yesterday.getDate() - 1);
     if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
     return d.toLocaleDateString("en-IN", {
-      day: "numeric", month: "short", year: "numeric",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     });
   };
 
@@ -174,7 +192,6 @@ export default function ChatRoom({
 
   return (
     <div className="chat-layout">
-
       {/* ── Sidebar ── */}
       <aside className="sidebar">
         <div className="sidebar-header">
@@ -186,50 +203,66 @@ export default function ChatRoom({
 
         <div className="sidebar-content">
           <p className="sidebar-section-title">Rooms</p>
-          {ROOMS.map((room) => (
-            <div
-              key={room.key}
-              className={`room-item ${room.key === activeRoom ? "active" : ""}`}
-              onClick={() => onRoomChange(room.key)}
-            >
-              <span className="room-item-icon">💬</span>
-              <span className="room-item-name">{room.label}</span>
-            </div>
-          ))}
+
+          {ROOMS.map((room) => {
+            const Icon = room.icon;
+
+            return (
+              <div
+                key={room.key}
+                className={`room-item ${room.key === activeRoom ? "active" : ""}`}
+                onClick={() => onRoomChange(room.key)}
+              >
+                <Icon size={18} />
+                <span>{room.label}</span>
+              </div>
+            );
+          })}
         </div>
 
         <div className="online-users">
-          <p className="sidebar-section-title" style={{ padding: "0 4px", marginBottom: "10px" }}>
+          <p
+            className="sidebar-section-title"
+            style={{ padding: "0 4px", marginBottom: "10px" }}
+          >
             Online — {onlineUsers.length || 1}
           </p>
           <div className="user-pill">
             <div className="avatar-wrap">
-              <div className="avatar">{username?.[0]?.toUpperCase() || "U"}</div>
+              <div className="avatar">
+                {username?.[0]?.toUpperCase() || "U"}
+              </div>
               <div className="online-dot" />
             </div>
             <span className="user-name">{username} (you)</span>
           </div>
-          {onlineUsers.filter((u) => u !== username).map((u) => (
-            <div key={u} className="user-pill">
-              <div className="avatar-wrap">
-                <div className="avatar">{u[0]?.toUpperCase()}</div>
-                <div className="online-dot" />
+          {onlineUsers
+            .filter((u) => u !== username)
+            .map((u) => (
+              <div key={u} className="user-pill">
+                <div className="avatar-wrap">
+                  <div className="avatar">{u[0]?.toUpperCase()}</div>
+                  <div className="online-dot" />
+                </div>
+                <span className="user-name">{u}</span>
               </div>
-              <span className="user-name">{u}</span>
-            </div>
-          ))}
+            ))}
         </div>
       </aside>
 
       {/* ── Main Chat ── */}
       <div className="chat-main">
-
         {/* Header */}
         <div className="chat-header">
           <div className="chat-header-info">
             <div className="avatar-wrap">
-              <div className="avatar lg">{username?.[0]?.toUpperCase() || "U"}</div>
-              <div className="online-dot" style={{ border: "2px solid var(--bg-secondary)" }} />
+              <div className="avatar lg">
+                {username?.[0]?.toUpperCase() || "U"}
+              </div>
+              <div
+                className="online-dot"
+                style={{ border: "2px solid var(--bg-secondary)" }}
+              />
             </div>
             <div>
               <div className="chat-header-name">{activeRoomLabel}</div>
@@ -237,186 +270,235 @@ export default function ChatRoom({
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn" title="Search">🔍</button>
-            <button className="icon-btn" title="Members">👥</button>
-            <button className="icon-btn" title="Notifications">🔔</button>
+            <button className="icon-btn" title="Search">
+              <Search size={18} />
+            </button>
+            <button className="icon-btn" title="Members">
+              <Users size={18} />
+            </button>
+            <button className="icon-btn" title="Notifications">
+              <Bell size={18} />
+            </button>
             <button
               className="icon-btn"
               onClick={handleLogout}
               title="Logout"
               style={{ color: "#ef4444" }}
             >
-              🚪
+              <LogOut size={18} />
             </button>
           </div>
         </div>
 
         {/* ── Messages Area ── */}
         <div className="messages-area" ref={messagesRef}>
-
           {/* Room loading spinner */}
           {roomLoading && (
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              gap: "10px", padding: "40px", color: "var(--text-muted)", fontSize: "13px",
-            }}>
-              <div style={{
-                width: "16px", height: "16px",
-                border: "2px solid var(--border)",
-                borderTop: "2px solid var(--accent-primary)",
-                borderRadius: "50%",
-                animation: "spinSlow 0.8s linear infinite",
-              }} />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                padding: "40px",
+                color: "var(--text-muted)",
+                fontSize: "13px",
+              }}
+            >
+              <div
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  border: "2px solid var(--border)",
+                  borderTop: "2px solid var(--accent-primary)",
+                  borderRadius: "50%",
+                  animation: "spinSlow 0.8s linear infinite",
+                }}
+              />
               Loading messages…
             </div>
           )}
 
           {/* Empty room state */}
           {!roomLoading && messages.length === 0 && (
-            <div style={{
-              display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center",
-              flex: 1, gap: "12px", padding: "60px 20px",
-              color: "var(--text-muted)", fontSize: "14px", textAlign: "center",
-            }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                flex: 1,
+                gap: "12px",
+                padding: "60px 20px",
+                color: "var(--text-muted)",
+                fontSize: "14px",
+                textAlign: "center",
+              }}
+            >
               <div style={{ fontSize: "40px" }}>💬</div>
               <div style={{ fontWeight: 600, color: "var(--text-secondary)" }}>
                 No messages yet in {activeRoomLabel}
               </div>
-              <div style={{ fontSize: "13px" }}>Be the first to say something!</div>
+              <div style={{ fontSize: "13px" }}>
+                Be the first to say something!
+              </div>
             </div>
           )}
 
-          {!roomLoading && Object.entries(grouped).map(([date, msgs]) => (
-            <div key={date}>
-              <div className="date-divider"><span>{date}</span></div>
+          {!roomLoading &&
+            Object.entries(grouped).map(([date, msgs]) => (
+              <div key={date}>
+                <div className="date-divider">
+                  <span>{date}</span>
+                </div>
 
-              {msgs.map((msg) => {
-                const isOwn      = msg.author === username;
-                const msgId      = msg._id || msg.id || String(msg.createdAt);
-                const msgReacts  = reactions[msgId] || {};
-                const isHighlighted = highlighted === msgId;
+                {msgs.map((msg) => {
+                  const isOwn = msg.author === username;
+                  const msgId = msg._id || msg.id || String(msg.createdAt);
+                  const msgReacts = reactions[msgId] || {};
+                  const isHighlighted = highlighted === msgId;
 
-                return (
-                  <div
-                    key={msgId}
-                    // ── Assign ref so scroll-to works ──
-                    ref={(el) => { if (el) msgRefs.current[msgId] = el; }}
-                    className={`msg-wrapper ${isOwn ? "own" : "other"}`}
-                    style={{
-                      marginBottom: "10px",
-                      // Flash highlight when scrolled-to
-                      transition: "background 0.3s ease",
-                      background: isHighlighted
-                        ? "rgba(108,99,255,0.12)"
-                        : "transparent",
-                      borderRadius: "12px",
-                      padding: isHighlighted ? "4px 8px" : "0",
-                    }}
-                    onMouseEnter={() => setHoveredMsg(msgId)}
-                    onMouseLeave={() => setHoveredMsg(null)}
-                  >
-                    {!isOwn && (
-                      <div className="msg-meta">
-                        <div className="avatar" style={{ width: "22px", height: "22px", fontSize: "10px" }}>
-                          {msg.author?.[0]?.toUpperCase() || "U"}
+                  return (
+                    <div
+                      key={msgId}
+                      // ── Assign ref so scroll-to works ──
+                      ref={(el) => {
+                        if (el) msgRefs.current[msgId] = el;
+                      }}
+                      className={`msg-wrapper ${isOwn ? "own" : "other"}`}
+                      style={{
+                        marginBottom: "10px",
+                        // Flash highlight when scrolled-to
+                        transition: "background 0.3s ease",
+                        background: isHighlighted
+                          ? "rgba(108,99,255,0.12)"
+                          : "transparent",
+                        borderRadius: "12px",
+                        padding: isHighlighted ? "4px 8px" : "0",
+                      }}
+                      onMouseEnter={() => setHoveredMsg(msgId)}
+                      onMouseLeave={() => setHoveredMsg(null)}
+                    >
+                      {!isOwn && (
+                        <div className="msg-meta">
+                          <div
+                            className="avatar"
+                            style={{
+                              width: "22px",
+                              height: "22px",
+                              fontSize: "10px",
+                            }}
+                          >
+                            {msg.author?.[0]?.toUpperCase() || "U"}
+                          </div>
+                          <span className="msg-author">{msg.author}</span>
                         </div>
-                        <span className="msg-author">{msg.author}</span>
-                      </div>
-                    )}
+                      )}
 
-                    <div style={{ position: "relative", display: "inline-block", maxWidth: "65%" , minWidth: "50px" }}>
-
-                      {/* Hover reaction picker */}
-                      {hoveredMsg === msgId && (
-                        <div className="msg-actions">
-                          {EMOJIS.slice(0, 6).map((emoji) => (
+                      <div
+                        style={{
+                          position: "relative",
+                          display: "inline-block",
+                          maxWidth: "65%",
+                          minWidth: "50px",
+                        }}
+                      >
+                        {/* Hover reaction picker */}
+                        {hoveredMsg === msgId && (
+                          <div className="msg-actions">
+                            {EMOJIS.slice(0, 6).map((emoji) => (
+                              <button
+                                key={emoji}
+                                className="react-btn"
+                                onClick={() => addReaction(msgId, emoji)}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
                             <button
-                              key={emoji}
                               className="react-btn"
+                              title="Reply"
+                              onClick={() => setReplyingTo(msg)}
+                            >
+                              <Reply size={14} color="white" size={20} />
+                            </button>
+                          </div>
+                        )}
+
+                        {msg.replyTo?.text && (
+                          <div
+                            onClick={() => scrollToMessage(msg.replyTo._id)}
+                            style={{
+                              background: isOwn
+                                ? "rgba(255,255,255,0.12)"
+                                : "rgba(108,99,255,0.1)",
+                              borderLeft: "3px solid var(--accent-secondary)",
+                              padding: "6px 10px",
+                              borderRadius: "8px 8px 0 0",
+                              fontSize: "12px",
+                              color: "var(--text-secondary)",
+                              marginBottom: "2px",
+                              cursor: "pointer",
+                              transition: "background 0.15s ease",
+                              userSelect: "none",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.background = isOwn
+                                ? "rgba(255,255,255,0.18)"
+                                : "rgba(108,99,255,0.18)")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.background = isOwn
+                                ? "rgba(255,255,255,0.12)"
+                                : "rgba(108,99,255,0.1)")
+                            }
+                          >
+                            <span
+                              style={{
+                                color: "var(--accent-secondary)",
+                                fontWeight: 600,
+                              }}
+                            >
+                              ↩ {msg.replyTo.author}
+                            </span>
+                            <br />
+                            <span style={{ opacity: 0.8 }}>
+                              {msg.replyTo.text?.slice(0, 80)}
+                              {msg.replyTo.text?.length > 80 ? "…" : ""}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="msg-bubble">{msg.text}</div>
+                      </div>
+
+                      <div className="msg-time">
+                        <span>{msg.time}</span>
+                        {isOwn && <span className="msg-status">✓✓</span>}
+                      </div>
+
+                      {/* Reactions */}
+                      {Object.keys(msgReacts).length > 0 && (
+                        <div className="msg-reactions">
+                          {Object.entries(msgReacts).map(([emoji, count]) => (
+                            <div
+                              key={emoji}
+                              className="reaction-badge"
                               onClick={() => addReaction(msgId, emoji)}
                             >
                               {emoji}
-                            </button>
+                              {count > 1 && (
+                                <span className="reaction-count">{count}</span>
+                              )}
+                            </div>
                           ))}
-                          <button
-                            className="react-btn"
-                            title="Reply"
-                            onClick={() => setReplyingTo(msg)}
-                          >
-                            ↩️
-                          </button>
                         </div>
                       )}
-
-                      
-                      {msg.replyTo?.text && (
-                        <div
-                          onClick={() => scrollToMessage(msg.replyTo._id)}
-                          style={{
-                            background: isOwn
-                              ? "rgba(255,255,255,0.12)"
-                              : "rgba(108,99,255,0.1)",
-                            borderLeft: "3px solid var(--accent-secondary)",
-                            padding: "6px 10px",
-                            borderRadius: "8px 8px 0 0",
-                            fontSize: "12px",
-                            color: "var(--text-secondary)",
-                            marginBottom: "2px",
-                            cursor: "pointer",
-                            transition: "background 0.15s ease",
-                            userSelect: "none",
-                          }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.background = isOwn
-                              ? "rgba(255,255,255,0.18)"
-                              : "rgba(108,99,255,0.18)")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.background = isOwn
-                              ? "rgba(255,255,255,0.12)"
-                              : "rgba(108,99,255,0.1)")
-                          }
-                        >
-                          <span style={{ color: "var(--accent-secondary)", fontWeight: 600 }}>
-                            ↩ {msg.replyTo.author}
-                          </span>
-                          <br />
-                          <span style={{ opacity: 0.8 }}>
-                            {msg.replyTo.text?.slice(0, 80)}
-                            {msg.replyTo.text?.length > 80 ? "…" : ""}
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="msg-bubble">{msg.text}</div>
                     </div>
-
-                    <div className="msg-time">
-                      <span>{msg.time}</span>
-                      {isOwn && <span className="msg-status">✓✓</span>}
-                    </div>
-
-                    {/* Reactions */}
-                    {Object.keys(msgReacts).length > 0 && (
-                      <div className="msg-reactions">
-                        {Object.entries(msgReacts).map(([emoji, count]) => (
-                          <div
-                            key={emoji}
-                            className="reaction-badge"
-                            onClick={() => addReaction(msgId, emoji)}
-                          >
-                            {emoji}
-                            {count > 1 && <span className="reaction-count">{count}</span>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+                  );
+                })}
+              </div>
+            ))}
 
           <div ref={bottomRef} />
         </div>
@@ -425,31 +507,35 @@ export default function ChatRoom({
         {typingUsers.length > 0 && (
           <div className="typing-indicator">
             <div className="typing-dots">
-              <span /><span /><span />
+              <span />
+              <span />
+              <span />
             </div>
             <span className="typing-text">
-              {typingUsers.join(", ")} {typingUsers.length === 1 ? "is" : "are"} typing…
+              {typingUsers.join(", ")} {typingUsers.length === 1 ? "is" : "are"}{" "}
+              typing…
             </span>
           </div>
         )}
 
         {/* ── Input Area ── */}
         <div className="input-area" style={{ position: "relative" }}>
-
           {/* Reply Banner */}
           {replyingTo && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              background: "rgba(108,99,255,0.1)",
-              border: "1px solid rgba(108,99,255,0.2)",
-              borderRadius: "10px",
-              padding: "8px 14px",
-              marginBottom: "10px",
-              fontSize: "13px",
-              color: "var(--text-secondary)",
-            }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "rgba(108,99,255,0.1)",
+                border: "1px solid rgba(108,99,255,0.2)",
+                borderRadius: "10px",
+                padding: "8px 14px",
+                marginBottom: "10px",
+                fontSize: "13px",
+                color: "var(--text-secondary)",
+              }}
+            >
               <span>
                 ↩ Replying to{" "}
                 <strong style={{ color: "var(--accent-secondary)" }}>
@@ -461,26 +547,37 @@ export default function ChatRoom({
               <button
                 onClick={() => setReplyingTo(null)}
                 style={{
-                  background: "none", border: "none",
-                  cursor: "pointer", color: "var(--text-muted)", fontSize: "16px",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--text-muted)",
+                  fontSize: "16px"
                 }}
               >
-                ✕
+                <X size={20} />
               </button>
+              
             </div>
           )}
 
-          {/* Emoji Picker */}
           {showEmoji && (
             <div
-              className="emoji-picker"
-              style={{ marginBottom: "8px", position: "relative", bottom: "auto", left: "auto" }}
+              style={{
+                position: "absolute",
+                bottom: "70px",
+                left: "20px",
+                zIndex: 1000,
+              }}
             >
-              {QUICK_EMOJIS.map((e) => (
-                <button key={e} className="emoji-btn" onClick={() => insertEmoji(e)}>
-                  {e}
-                </button>
-              ))}
+              <EmojiPicker
+                onEmojiClick={(emojiData) => {
+                  insertEmoji(emojiData.emoji);
+                  setShowEmoji(false); 
+                }}
+                width={320}
+                height={400}
+                theme="dark"
+              />
             </div>
           )}
 
@@ -490,7 +587,7 @@ export default function ChatRoom({
               onClick={() => setShowEmoji(!showEmoji)}
               title="Emoji"
             >
-              😊
+              <Smile size={20} />
             </button>
 
             <textarea
@@ -509,11 +606,10 @@ export default function ChatRoom({
               disabled={!message.trim()}
               title="Send"
             >
-              ➤
+               <SendHorizontal />
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );
