@@ -7,7 +7,6 @@ import { socket } from "../lib/socket";
 const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🔥", "🎉", "👏", "🙌", "💯"];
 
 import EmojiPicker from "emoji-picker-react";
-// import {  } from "lucide-react";
 
 // room label → socket room key
 import {
@@ -89,7 +88,7 @@ export default function ChatRoom({
   useEffect(() => {
     const ta = textareaRef.current;
     if (ta) {
-      ta.style.height = "22px";
+      ta.style.height = "24px";
       ta.style.height = Math.min(ta.scrollHeight, 120) + "px";
     }
   }, [message]);
@@ -406,7 +405,7 @@ export default function ChatRoom({
                         {/* Hover reaction picker */}
                         {hoveredMsg === msgId && (
                           <div className="msg-actions">
-                            {EMOJIS.slice(0, 6).map((emoji) => (
+                            {EMOJIS.slice(0, 10).map((emoji) => (
                               <button
                                 key={emoji}
                                 className="react-btn"
@@ -420,7 +419,7 @@ export default function ChatRoom({
                               title="Reply"
                               onClick={() => setReplyingTo(msg)}
                             >
-                              <Reply size={14} color="white" size={20} />
+                              <Reply size={20} color="white" />
                             </button>
                           </div>
                         )}
